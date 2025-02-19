@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Device;
 
 class DeviceController extends Controller
 {
@@ -11,7 +12,8 @@ class DeviceController extends Controller
      */
     public function index()
     {
-        //
+        $devices = Device::all();
+        return view('devices.index', ['devices' => $devices]);
     }
 
     /**
@@ -19,7 +21,7 @@ class DeviceController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Devices/Create');
     }
 
     /**
@@ -35,7 +37,7 @@ class DeviceController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return Inertia::render('Devices/Show', ['id' => $id]);
     }
 
     /**
@@ -43,7 +45,7 @@ class DeviceController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        return Inertia::render('Devices/Edit', ['id' => $id]);
     }
 
     /**

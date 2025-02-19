@@ -109,17 +109,14 @@
                             <button onclick="toggleModal('trashBinModal')" 
                                     class="relative p-2 text-white hover:text-white hover:bg-emerald-600 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 transition-all duration-150">
                                 <i class="fas fa-box text-xl"></i>
-                                @if(collect($trashBins)->contains('status', 'Full'))
-                                    <span class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-emerald-700"></span>
-                                @endif
                             </button>
                         </div>
                         <!-- Download Report Button -->
-                        <a href="{{ route('devices.report.download') }}" 
+                        <button onclick="alert('Report generation is not available in static mode')" 
                            class="inline-flex items-center px-4 py-2 bg-white text-emerald-800 text-sm font-medium rounded-lg hover:bg-emerald-50 transition-all duration-150 shadow-md hover:shadow-lg">
                             <i class="fas fa-download mr-2"></i>
                             Generate Report
-                        </a>
+                        </button>
                         <!-- User Menu -->
                         <div class="relative">
                             <button onclick="toggleDropdown('userDropdown')" 
@@ -141,7 +138,7 @@
                                     <a href="#profile" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                                         <i class="fas fa-user-cog mr-2"></i> Profile Settings
                                     </a>
-                                    <form action="/logout" method="POST" class="block">
+                                    <form action="{{ route('logout') }}" method="POST" class="block">
                                         @csrf
                                         <button type="submit" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 focus:outline-none">
                                             <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
@@ -174,8 +171,7 @@
                             <select id="statusFilter" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
                                 <option value="">All Statuses</option>
                                 <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                                <option value="maintenance">Maintenance</option>
+                                <option value="disconnected">Disconnected</option>
                             </select>
                         </div>
                     </div>
@@ -188,7 +184,9 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-slate-500 text-sm font-medium">Total Bottles & Cans</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">{{ number_format($metrics['total_bottles']) }}</p>
+                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
+                                    {{ $bottleStats['total'] ?? 0 }}
+                                </p>
                             </div>
                             <div class="bg-emerald-100 dark:bg-emerald-900 p-3 rounded-xl">
                                 <i class="fas fa-recycle text-2xl text-emerald-600 dark:text-emerald-500"></i>
@@ -205,7 +203,9 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-slate-500 text-sm font-medium">Today's Collection</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">{{ $metrics['today_bottles'] }}</p>
+                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
+                                    {{ $bottleStats['today'] ?? 0 }}
+                                </p>
                             </div>
                             <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-xl">
                                 <i class="fas fa-box text-2xl text-blue-600 dark:text-blue-500"></i>
@@ -222,7 +222,9 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-slate-500 text-sm font-medium">Total Bandwidth</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">{{ $metrics['total_bandwidth'] }}</p>
+                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
+                                    {{ $bandwidthStats['total'] ?? '0 B' }}
+                                </p>
                             </div>
                             <div class="bg-indigo-100 dark:bg-indigo-900 p-3 rounded-xl">
                                 <i class="fas fa-database text-2xl text-indigo-600 dark:text-indigo-500"></i>
@@ -239,7 +241,9 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-slate-500 text-sm font-medium">Today's Bandwidth</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">{{ $metrics['today_bandwidth'] }}</p>
+                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
+                                    {{ $bandwidthStats['today'] ?? '0 B' }}
+                                </p>
                             </div>
                             <div class="bg-rose-100 dark:bg-rose-900 p-3 rounded-xl">
                                 <i class="fas fa-bolt text-2xl text-rose-600 dark:text-rose-500"></i>
@@ -263,7 +267,7 @@
                             <div class="mt-4 sm:mt-0 flex space-x-3">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 dark:bg-emerald-500/20 text-emerald-300 dark:text-emerald-500 border border-emerald-500/20 dark:border-emerald-500/20">
                                     <i class="fas fa-circle text-xs mr-2 text-emerald-400 dark:text-emerald-500"></i>
-                                    {{ count($devices) }} Active
+                                    10 Active
                                 </span>
                             </div>
                         </div>
@@ -276,51 +280,53 @@
                                     <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Device</th>
                                     <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">MAC Address</th>
                                     <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Last Seen</th>
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Bandwidth</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700" id="deviceTableBody">
-                                @foreach($devices as $device)
-                                <tr class="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all duration-150">
+                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                                @forelse($activeUsers as $user)
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-12 w-12 bg-emerald-50 dark:bg-slate-800 rounded-xl border border-emerald-100 dark:border-slate-700 flex items-center justify-center shadow-sm">
-                                                <i class="fas fa-mobile-alt text-emerald-600 dark:text-slate-400 text-xl group-hover:text-emerald-700 dark:group-hover:text-slate-300 transition-colors duration-150"></i>
+                                            <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-mobile text-2xl text-gray-500"></i>
                                             </div>
                                             <div class="ml-4">
-                                                <div class="text-sm font-semibold text-slate-900 dark:text-white">{{ $device['name'] }}</div>
-                                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Device ID: {{ substr($device['mac_address'], -6) }}</div>
+                                                <div class="text-sm font-medium text-slate-900 dark:text-white">
+                                                    {{ $user['user'] ?? 'Unknown' }}
+                                                </div>
+                                                <div class="text-sm text-slate-500">
+                                                    Device ID: {{ $user['id'] ?? 'N/A' }}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-mono text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-md border border-slate-200 dark:border-slate-700 inline-block">{{ $device['mac_address'] }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @if($device['status'] === 'Connected')
-                                            <div class="flex items-center space-x-2">
-                                                <span class="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-500"></span>
-                                                <span class="text-sm font-medium text-emerald-700 dark:text-emerald-500">Connected</span>
-                                            </div>
-                                        @else
-                                            <div class="flex items-center space-x-2">
-                                                <span class="flex-shrink-0 w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700"></span>
-                                                <span class="text-sm font-medium text-slate-600 dark:text-slate-500">Offline</span>
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-slate-600 dark:text-slate-500">{{ $device['last_seen'] }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center space-x-2">
-                                            <i class="fas fa-chart-line text-slate-400 dark:text-slate-600"></i>
-                                            <div class="text-sm text-slate-600 dark:text-slate-500">{{ $device['bandwidth_used'] }}</div>
+                                        <div class="text-sm text-slate-900 dark:text-white">
+                                            {{ $user['mac-address'] ?? 'N/A' }}
                                         </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ isset($user['uptime']) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                            {{ isset($user['uptime']) ? 'Active' : 'Disconnected' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                        <button class="text-emerald-600 hover:text-emerald-900" onclick="alert('Edit action is not available in static mode')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="ml-2 text-red-600 hover:text-red-900" onclick="alert('Delete action is not available in static mode')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
-                                @endforeach
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-center text-slate-500">
+                                        No active users found
+                                    </td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
