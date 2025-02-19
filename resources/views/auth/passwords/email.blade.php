@@ -51,7 +51,7 @@
                 @endif
 
                 <div class="mb-6 text-sm text-gray-600">
-                    {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link.') }}
+                    {{ __('Forgot your password? No problem. Just let us know your email address.') }}
                 </div>
 
                 <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
