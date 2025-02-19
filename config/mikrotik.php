@@ -5,5 +5,7 @@ return [
     'username' => env('MIKROTIK_USERNAME', 'admin'),
     'password' => env('MIKROTIK_PASSWORD', ''),
     'port' => env('MIKROTIK_PORT', 8728),
-    'interface' => env('MIKROTIK_INTERFACE', 'ether1'),
+    'interface' => env('MIKROTIK_INTERFACE', 'ether1'), //Wired Monitoring
+    'api_ssl' => env('MIKROTIK_API_SSL', false),
+    'wireless_mac' => env('MIKROTIK_WIRELESS_MAC', ''), //Wireless Monitoring
 ];

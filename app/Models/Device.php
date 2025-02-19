@@ -16,4 +16,7 @@ class Device extends Model
         'last_seen',
         'bandwidth_used'
     ];
+    protected $casts = [
+        'last_seen' => 'datetime'
+    ];
 }

@@ -236,7 +236,7 @@
                         </div>
                     </div>
 
-                    <!-- Today's Bandwidth Card -->
+                    <!-- Today's Bandwidth Card
                     <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
                         <div class="flex items-center justify-between">
                             <div>
@@ -253,6 +253,30 @@
                             <i class="fas fa-chart-area mr-2"></i>
                             <span>Current Usage</span>
                         </div>
+                    </div> -->
+
+                    <!-- Router Bandwidth Card -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-500 text-sm font-medium">Router Usage</p>
+                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
+                                    {{ $routerBandwidth['total_rate'] }}
+                                </p>
+                            </div>
+                            <div class="bg-purple-100 dark:bg-purple-900 p-3 rounded-xl">
+                                <i class="fas fa-network-wired text-2xl text-purple-600 dark:text-purple-500"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm text-slate-500 mb-1">
+                                <span>Download: {{ $routerBandwidth['rx_rate'] }}</span>
+                                <span>Upload: {{ $routerBandwidth['tx_rate'] }}</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill bg-purple-500" style="width: 100%"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -267,7 +291,7 @@
                             <div class="mt-4 sm:mt-0 flex space-x-3">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 dark:bg-emerald-500/20 text-emerald-300 dark:text-emerald-500 border border-emerald-500/20 dark:border-emerald-500/20">
                                     <i class="fas fa-circle text-xs mr-2 text-emerald-400 dark:text-emerald-500"></i>
-                                    10 Active
+                                    {{ $activeUsersCount }} Active
                                 </span>
                             </div>
                         </div>
@@ -275,55 +299,47 @@
                     
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                            <thead class="bg-slate-100 dark:bg-slate-800">
+                            <thead class="bg-slate-50 dark:bg-slate-800">
                                 <tr>
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Device</th>
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">MAC Address</th>
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Device</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">MAC Address</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Bandwidth Used</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Seen</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                                @forelse($activeUsers as $user)
+                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700" id="deviceTableBody">
+                                @forelse($devices as $device)
                                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                                <i class="fas fa-mobile text-2xl text-gray-500"></i>
-                                            </div>
-                                            <div class="ml-4">
-                                                <div class="text-sm font-medium text-slate-900 dark:text-white">
-                                                    {{ $user['user'] ?? 'Unknown' }}
-                                                </div>
-                                                <div class="text-sm text-slate-500">
-                                                    Device ID: {{ $user['id'] ?? 'N/A' }}
-                                                </div>
-                                            </div>
+                                        <div class="text-slate-500 dark:text-slate-400">
+                                            <i class="fas fa-laptop text-lg"></i>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-slate-900 dark:text-white">
-                                            {{ $user['mac-address'] ?? 'N/A' }}
-                                        </div>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-200">
+                                        {{ $device->name }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                        {{ $device->mac_address }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ isset($user['uptime']) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                            {{ isset($user['uptime']) ? 'Active' : 'Disconnected' }}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            {{ $device->status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                            {{ $device->status }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                        <button class="text-emerald-600 hover:text-emerald-900" onclick="alert('Edit action is not available in static mode')">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="ml-2 text-red-600 hover:text-red-900" onclick="alert('Delete action is not available in static mode')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                        {{ $device->bandwidth_used }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                        {{ $device->last_seen ? $device->last_seen->diffForHumans() : 'Never' }}
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-4 text-center text-slate-500">
-                                        No active users found
+                                    <td colspan="5" class="px-6 py-4 text-center text-slate-500 dark:text-slate-400">
+                                        No devices found
                                     </td>
                                 </tr>
                                 @endforelse
@@ -419,20 +435,30 @@
     function filterDevices() {
         const searchTerm = deviceSearch.value.toLowerCase();
         const statusTerm = statusFilter.value.toLowerCase();
-        const rows = deviceTableBody.getElementsByTagName('tr');
+        const rows = document.querySelectorAll('#deviceTableBody tr');
 
-        Array.from(rows).forEach(row => {
-            const deviceName = row.querySelector('td:first-child').textContent.toLowerCase();
-            const deviceStatus = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            
-            const matchesSearch = deviceName.includes(searchTerm);
-            const matchesStatus = !statusTerm || deviceStatus.includes(statusTerm);
-            
-            row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+        rows.forEach(row => {
+            if (row.cells.length > 3) { // Check if it's a valid device row
+                const deviceName = row.cells[1].textContent.toLowerCase().trim();
+                const deviceStatus = row.querySelector('td:nth-child(4) span').textContent.toLowerCase().trim();
+                
+                const matchesSearch = deviceName.includes(searchTerm);
+                const matchesStatus = statusTerm === '' || deviceStatus === statusTerm;
+                
+                row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+            }
         });
     }
 
-    deviceSearch.addEventListener('input', filterDevices);
-    statusFilter.addEventListener('change', filterDevices);
+    // Add event listeners when document is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        const deviceSearch = document.getElementById('deviceSearch');
+        const statusFilter = document.getElementById('statusFilter');
+
+        if (deviceSearch && statusFilter) {
+            deviceSearch.addEventListener('input', filterDevices);
+            statusFilter.addEventListener('change', filterDevices);
+        }
+    });
 </script>
 </html>
