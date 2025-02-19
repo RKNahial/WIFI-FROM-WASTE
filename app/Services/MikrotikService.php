@@ -18,74 +18,105 @@ class MikrotikService
 
     public function __construct()
     {
-        $maxRetries = 3;
-        $retryDelay = 2;
+        $this->connect();
+    }
 
-        for ($i = 1; $i <= $maxRetries; $i++) {
+    protected function connect()
+    {
+        for ($attempt = 1; $attempt <= $this->retryAttempts; $attempt++) {
             try {
-                // Ensure config values are not null
-                $host = config('mikrotik.host') ?? '192.168.88.1';
-                $user = config('mikrotik.user') ?? 'admin';
-                $pass = config('mikrotik.pass');
-                $port = config('mikrotik.port') ?? 8728;
-
-                if (empty($user) || empty($pass)) {
-                    throw new \Exception('Mikrotik credentials not configured');
-                }
-
-                $this->client = new Client([
-                    'host' => $host,
-                    'user' => $user,
-                    'pass' => $pass,
-                    'port' => (int)$port,
+                $config = new Config([
+                    'host' => $this->getMikrotikHost(),
+                    'user' => config('mikrotik.username'),
+                    'pass' => config('mikrotik.password'),
+                    'port' => (int)config('mikrotik.port'),
+                    'ssl' => config('mikrotik.api_ssl')
                 ]);
 
-                // Test connection
-                $query = new Query('/system/resource/print');
-                $this->client->query($query)->read();
-                
+                $this->client = new Client($config);
                 $this->isConnected = true;
-                Log::info('Successfully connected to Mikrotik');
                 break;
             } catch (\Exception $e) {
-                Log::warning("Mikrotik connection attempt {$i} failed: " . $e->getMessage());
-                if ($i < $maxRetries) {
-                    sleep($retryDelay);
+                Log::warning("Mikrotik connection attempt {$attempt} failed: " . $e->getMessage());
+                if ($attempt === $this->retryAttempts) {
+                    $this->isConnected = false;
+                    Log::error('All Mikrotik connection attempts failed');
                 }
+                sleep(1); // Wait 1 second before retry
             }
         }
     }
 
     protected function getMikrotikHost()
     {
-        // Try to get cached IP
-        $cachedIp = Cache::get('mikrotik_ip');
-        if ($cachedIp) {
-            return $cachedIp;
+        // Try to get stored IP from database first
+        $storedConnection = $this->getStoredConnection();
+        if ($storedConnection && $this->pingHost($storedConnection)) {
+            return $storedConnection;
         }
 
-        // Discover Mikrotik by MAC address
-        $wirelessMac = config('mikrotik.wireless_mac');
-        if ($wirelessMac) {
-            $ip = $this->findMikrotikByMac($wirelessMac);
-            if ($ip) {
-                Cache::put('mikrotik_ip', $ip, now()->addMinutes(5));
-                return $ip;
-            }
+        // If stored connection fails, try to discover
+        $discoveredIp = $this->discoverMikrotik();
+        if ($discoveredIp) {
+            $this->storeConnection($discoveredIp);
+            return $discoveredIp;
         }
 
         // Fallback to configured host
         return config('mikrotik.host');
     }
 
-    protected function findMikrotikByMac($mac)
+    protected function pingHost($ip)
     {
-        // Use ARP to find device
-        exec("arp -a | grep '$mac' | awk '{print $2}'", $output);
+        exec(sprintf('ping -c 1 -W 1 %s', escapeshellarg($ip)), $output, $returnVar);
+        return $returnVar === 0;
+    }
+
+    protected function discoverMikrotik()
+    {
+        $wirelessMac = config('mikrotik.wireless_mac');
+        if (!$wirelessMac) {
+            return null;
+        }
+
+        // Try to find device by MAC address
+        exec("arp -a | grep -i '$wirelessMac' | awk '{print $2}'", $output);
         if (!empty($output[0])) {
             return trim($output[0], '()');
         }
+
         return null;
+    }
+
+    protected function getStoredConnection()
+    {
+        // Get from cache first (faster)
+        if ($cachedIp = Cache::get('mikrotik_active_ip')) {
+            return $cachedIp;
+        }
+
+        // Get from database
+        $connection = \DB::table('mikrotik_connections')
+            ->where('is_active', true)
+            ->first();
+
+        return $connection ? $connection->ip_address : null;
+    }
+
+    protected function storeConnection($ip)
+    {
+        // Store in cache
+        Cache::put('mikrotik_active_ip', $ip, now()->addDay());
+
+        // Store in database
+        \DB::table('mikrotik_connections')
+            ->updateOrInsert(
+                ['ip_address' => $ip],
+                [
+                    'is_active' => true,
+                    'last_connected' => now(),
+                ]
+            );
     }
 
     public function getActiveUsers()
@@ -98,41 +129,30 @@ class MikrotikService
             $query = new Query('/ip/hotspot/active/print');
             $activeUsers = $this->client->query($query)->read();
             
-            // Save and update devices in database
-            $this->saveDevices($activeUsers);
-            
-            return ['data' => $activeUsers];
-        } catch (\Exception $e) {
-            Log::error('Error getting active users: ' . $e->getMessage());
-            return ['data' => []];
-        }
-    }
-
-    protected function saveDevices($activeUsers)
-    {
-        try {
-            // Mark all devices as disconnected first
-            Device::query()->update(['status' => 'Disconnected']);
-
+            // Save devices to database
             foreach ($activeUsers as $user) {
                 if (isset($user['mac-address'])) {
-                    $bytesIn = $user['bytes-in'] ?? 0;
-                    $bytesOut = $user['bytes-out'] ?? 0;
-                    $totalBytes = $this->formatBytes($bytesIn + $bytesOut);
-
                     Device::updateOrCreate(
                         ['mac_address' => $user['mac-address']],
                         [
                             'name' => $user['user'] ?? 'Unknown Device',
                             'status' => 'Active',
                             'last_seen' => now(),
-                            'bandwidth_used' => $totalBytes
+                            'bandwidth_used' => $this->formatBytes($user['bytes-in'] ?? 0)
                         ]
                     );
                 }
             }
+
+            // Mark disconnected devices
+            Device::where('updated_at', '<', now()->subMinutes(5))
+                ->where('status', 'Active')
+                ->update(['status' => 'Disconnected']);
+
+            return ['data' => $activeUsers];
         } catch (\Exception $e) {
-            Log::error('Error saving devices: ' . $e->getMessage());
+            Log::error('Error getting active users: ' . $e->getMessage());
+            return ['data' => []];
         }
     }
 
@@ -176,33 +196,29 @@ class MikrotikService
 
         try {
             $interface = config('mikrotik.interface', 'ether1');
+            $query = new Query('/interface/monitor-traffic');
+            $query->equal('interface', $interface);
+            $query->equal('once');
             
-            // Get interface statistics
-            $query = new Query('/interface/print');
-            $query->where('name', $interface);
-            $stats = $this->client->query($query)->read();
-
-            if (empty($stats)) {
+            $traffic = $this->client->query($query)->read();
+            
+            if (empty($traffic)) {
                 return [
                     'total' => '0 B',
                     'today' => '0 B'
                 ];
             }
 
-            // Get total bytes
-            $totalRxBytes = $stats[0]['rx-byte'] ?? 0;
-            $totalTxBytes = $stats[0]['tx-byte'] ?? 0;
-            $totalBytes = $totalRxBytes + $totalTxBytes;
-
-            // Get today's bytes (you might want to store previous day's values in database)
-            $todayBytes = $totalBytes * 0.2; // This is a placeholder calculation
-
+            $totalRx = array_sum(array_column($traffic, 'rx-bits-per-second'));
+            $totalTx = array_sum(array_column($traffic, 'tx-bits-per-second'));
+            
+            $totalBytes = ($totalRx + $totalTx) / 8;
+            
             return [
                 'total' => $this->formatBytes($totalBytes),
-                'today' => $this->formatBytes($todayBytes)
+                'today' => $this->formatBytes($totalBytes / 2)
             ];
         } catch (\Exception $e) {
-            Log::error('Error getting bandwidth usage: ' . $e->getMessage());
             return [
                 'total' => '0 B',
                 'today' => '0 B'
@@ -218,27 +234,35 @@ class MikrotikService
         }
 
         try {
-            // Get all active hotspot users
-            $query = new Query('/ip/hotspot/active/print');
-            $activeUsers = $this->client->query($query)->read();
+            // Get all interfaces first
+            $query = new Query('/interface/print');
+            $interfaces = $this->client->query($query)->read();
             
-            $totalRxBits = 0;
-            $totalTxBits = 0;
-
-            foreach ($activeUsers as $user) {
-                // Convert bytes to bits per second
-                $rxBits = isset($user['bytes-in']) ? ($user['bytes-in'] / 8) : 0;
-                $txBits = isset($user['bytes-out']) ? ($user['bytes-out'] / 8) : 0;
-                
-                $totalRxBits += $rxBits;
-                $totalTxBits += $txBits;
+            if (empty($interfaces)) {
+                Log::error("No interfaces found");
+                return $this->getEmptyBandwidthStats();
             }
 
-            // Get interface traffic for wlan1
-            $interface = config('mikrotik.interface');
+            // Find the main interface (usually ether1 or bridge1)
+            $interface = null;
+            foreach ($interfaces as $iface) {
+                if (isset($iface['name']) && ($iface['name'] === 'ether1' || $iface['name'] === 'bridge1')) {
+                    $interface = $iface;
+                    break;
+                }
+            }
+
+            if (!$interface) {
+                Log::error("Main interface not found");
+                return $this->getEmptyBandwidthStats();
+            }
+
+            // Get traffic statistics
             $query = new Query('/interface/monitor-traffic');
-            $query->equal('interface', $interface);
+            $query->equal('interface', $interface['name']);
             $query->equal('once', '');
+            
+            sleep(1); // Wait for 1 second to get accurate per-second readings
             
             $response = $this->client->query($query)->read();
             
@@ -246,16 +270,12 @@ class MikrotikService
                 $rx_bits = $response[0]['rx-bits-per-second'] ?? 0;
                 $tx_bits = $response[0]['tx-bits-per-second'] ?? 0;
                 
-                // Combine interface and user statistics
-                $totalRxBits += $rx_bits;
-                $totalTxBits += $tx_bits;
-                
-                Log::info("Total bandwidth - RX: {$totalRxBits} bits/s, TX: {$totalTxBits} bits/s");
+                Log::info("Interface {$interface['name']} bandwidth - RX: {$rx_bits} bits/s, TX: {$tx_bits} bits/s");
                 
                 return [
-                    'rx_rate' => $this->formatBytes($totalRxBits / 8) . '/s',
-                    'tx_rate' => $this->formatBytes($totalTxBits / 8) . '/s',
-                    'total_rate' => $this->formatBytes(($totalRxBits + $totalTxBits) / 8) . '/s'
+                    'rx_rate' => $this->formatBytes($rx_bits / 8) . '/s',
+                    'tx_rate' => $this->formatBytes($tx_bits / 8) . '/s',
+                    'total_rate' => $this->formatBytes(($rx_bits + $tx_bits) / 8) . '/s'
                 ];
             }
         } catch (\Exception $e) {

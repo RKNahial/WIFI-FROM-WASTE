@@ -44,7 +44,11 @@ class WifiFromWasteController extends Controller
                 'activeUsers' => ['data' => []],
                 'activeUsersCount' => 0,
                 'bandwidthStats' => ['total' => '0 B', 'today' => '0 B'],
-                'routerBandwidth' => ['rx_rate' => '0 B/s', 'tx_rate' => '0 B/s', 'total_rate' => '0 B/s'],
+                'routerBandwidth' => [
+                    'rx_rate' => '0 B/s',
+                    'tx_rate' => '0 B/s',
+                    'total_rate' => '0 B/s'
+                ],
                 'bottleStats' => ['total' => 0, 'today' => 0]
             ]);
         }
