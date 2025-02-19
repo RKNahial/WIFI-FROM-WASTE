@@ -33,7 +33,7 @@
         <header class="bg-white shadow">
             <div class="max-w-7xl mx-auto py-6 px-4">
                 <h2 class="text-3xl font-bold text-gray-900">
-                    Dashboard
+                    Dashboard bayot
                 </h2>
             </div>
         </header>
