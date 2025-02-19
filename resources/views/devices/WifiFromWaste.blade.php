@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WIFI FROM WASTE</title>
+    <title> {{ config('app.name') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
@@ -93,10 +93,11 @@
         <nav class="gradient-bg shadow-lg border-b border-emerald-800 dark:border-emerald-900 fixed top-0 left-0 right-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <i class="fas fa-recycle text-white text-2xl mr-2"></i>
-                        <h1 class="text-xl font-bold text-white">WIFI FROM WASTE</h1>
-                    </div>
+                <div class="flex items-center">
+                    <img src="{{ asset('assets/img/logo/logo-white.png') }}" 
+                        alt="WIFI FROM WASTE" 
+                        class="h-8"> 
+                </div>
                     <div class="flex items-center space-x-4">
                         <!-- Dark Mode Toggle -->
                         <button onclick="toggleDarkMode()" 
