@@ -23,10 +23,10 @@
     </script>
     <style>
         .gradient-bg {
-            background: linear-gradient(120deg, #059669 0%, #047857 100%);
+            background: #3C8F3A;
         }
         .dark .gradient-bg {
-            background: linear-gradient(120deg, #064e3b 0%, #022c22 100%);
+            background: #3C8F3A;
         }
         .card-gradient {
             background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
@@ -90,7 +90,7 @@
 <body class="bg-slate-100 dark:bg-slate-900 transition-colors duration-200">
     <div class="min-h-screen">
         <!-- Navigation -->
-        <nav class="gradient-bg shadow-lg border-b border-emerald-800 dark:border-emerald-900 fixed top-0 left-0 right-0 z-50">
+        <nav class="gradient-bg shadow-lg border-b border-[#3C8F3A] dark:border-[#3C8F3A] fixed top-0 left-0 right-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -101,14 +101,14 @@
                     <div class="flex items-center space-x-4">
                         <!-- Dark Mode Toggle -->
                         <button onclick="toggleDarkMode()" 
-                                class="p-2 text-white hover:text-white hover:bg-emerald-600 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 transition-all duration-150">
+                                class="p-2 text-white hover:text-white hover:bg-[#3C8F3A] rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3C8F3A] transition-all duration-150">
                             <i class="fas fa-moon dark:hidden"></i>
                             <i class="fas fa-sun hidden dark:block"></i>
                         </button>
                         <!-- Trash Bin Status -->
                         <div class="relative">
                             <button onclick="toggleModal('trashBinModal')" 
-                                    class="relative p-2 text-white hover:text-white hover:bg-emerald-600 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 transition-all duration-150">
+                                    class="relative p-2 text-white hover:text-white hover:bg-[#3C8F3A] rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3C8F3A] transition-all duration-150">
                                 <i class="fas fa-box text-xl"></i>
                             </button>
                         </div>
@@ -290,7 +290,7 @@
                                 <p class="mt-1 text-sm text-slate-300 dark:text-slate-500">Real-time device monitoring and statistics</p>
                             </div>
                             <div class="mt-4 sm:mt-0 flex space-x-3">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 dark:bg-emerald-500/20 text-emerald-300 dark:text-emerald-500 border border-emerald-500/20 dark:border-emerald-500/20">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#3C8F3A]/20 text-[#3C8F3A] border border-[#3C8F3A]/20">
                                     <i class="fas fa-circle text-xs mr-2 text-emerald-400 dark:text-emerald-500"></i>
                                     {{ $activeUsersCount }} Active
                                 </span>
@@ -408,7 +408,7 @@
             </div>
             <div class="px-4 py-3 bg-white dark:bg-slate-800 rounded-b-xl">
                 <button onclick="toggleModal('trashBinModal')" 
-                        class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 transition-all duration-150">
+                        class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-[#3C8F3A] hover:bg-[#3C8F3A] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3C8F3A] transition-all duration-150">
                     Close
                 </button>
             </div>
