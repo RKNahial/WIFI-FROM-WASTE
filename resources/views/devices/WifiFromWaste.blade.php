@@ -12,6 +12,8 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -103,11 +105,11 @@
         }
 
         .dataTables_wrapper .dataTables_info {
-            @apply p-6 text-sm text-emerald-600 dark:text-emerald-400;
+            @apply p-2 text-sm text-emerald-600 dark:text-emerald-400;
         }
 
         .dataTables_wrapper .dataTables_paginate {
-            @apply p-6 bg-emerald-50 dark:bg-slate-800 border-t border-emerald-100 dark:border-slate-700;
+            @apply p-2 bg-emerald-50 dark:bg-slate-800 border-t border-emerald-100 dark:border-slate-700;
         }
 
         .dataTables_wrapper .dataTables_paginate .paginate_button {
@@ -172,7 +174,7 @@
                             </button>
                         </div>
                         <!-- Download Report Button -->
-                        <button onclick="alert('Report generation is not available in static mode')" 
+                        <button onclick="generateUserReport()" 
                            class="inline-flex items-center px-4 py-2 bg-white text-emerald-800 text-sm font-medium rounded-lg hover:bg-emerald-50 transition-all duration-150 shadow-md hover:shadow-lg">
                             <i class="fas fa-download mr-2"></i>
                             Generate Report
@@ -557,5 +559,81 @@
             }
         };
     });
+
+    function generateUserReport() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Add logo
+        // const logoImg = new Image();
+        // logoImg.src = "{{ asset('assets/img/logo/logo-green.png') }}";
+        // doc.addImage(logoImg, 'PNG', 15, 15, 30, 30);
+        
+        // Title
+        doc.setFontSize(20);
+        doc.setTextColor(5, 150, 105); // Emerald color
+        doc.text('WIFI FROM WASTE - User Report', 15, 25);
+        
+        // Date
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 35);
+        
+        // User Information
+        doc.setFontSize(14);
+        doc.setTextColor(5, 150, 105);
+        doc.text('User Information', 15, 50);
+        
+        doc.setFontSize(12);
+        doc.setTextColor(60);
+        doc.text(`Name: {{Auth::user()->name}}`, 15, 60);
+        doc.text(`Email: {{Auth::user()->email}}`, 15, 70);
+        doc.text(`Account Created: {{Auth::user()->created_at->format('F j, Y')}}`, 15, 80);
+        
+        // Connected Devices Section
+        doc.setFontSize(14);
+        doc.setTextColor(5, 150, 105);
+        doc.text('Connected Devices Summary', 15, 100);
+        
+        // Create devices table
+        const deviceData = [];
+        const table = document.getElementById('devicesTable');
+        if (table) {
+            const rows = table.getElementsByTagName('tr');
+            for (let i = 1; i < rows.length; i++) { // Skip header row
+                const cells = rows[i].getElementsByTagName('td');
+                if (cells.length > 0) {
+                    deviceData.push([
+                        cells[1].textContent.trim(), // Name
+                        cells[2].textContent.trim(), // MAC Address
+                        cells[3].textContent.trim(), // Status
+                        cells[4].textContent.trim(), // Bandwidth
+                        cells[5].textContent.trim()  // Last Seen
+                    ]);
+                }
+            }
+        }
+        
+        doc.autoTable({
+            startY: 110,
+            head: [['Device Name', 'MAC Address', 'Status', 'Bandwidth Used', 'Last Seen']],
+            body: deviceData,
+            theme: 'grid',
+            headStyles: { fillColor: [5, 150, 105] },
+            styles: { fontSize: 8 }
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10);
+        }
+        
+        // Save the PDF
+        doc.save(`wifi-from-waste-report-${new Date().toISOString().split('T')[0]}.pdf`);
+    }
 </script>
 </html>
