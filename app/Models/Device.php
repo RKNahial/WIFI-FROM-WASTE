@@ -13,10 +13,11 @@ class Device extends Model
         'name',
         'mac_address',
         'status',
+        'bandwidth_used',
         'last_seen',
-        'bandwidth_used'
     ];
+
     protected $casts = [
-        'last_seen' => 'datetime'
+        'last_seen' => 'datetime',
     ];
 }
