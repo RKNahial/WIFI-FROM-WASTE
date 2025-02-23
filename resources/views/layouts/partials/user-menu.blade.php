@@ -15,7 +15,7 @@
             <p class="text-xs text-slate-500">{{Auth::user()->email}}</p>
         </div>
         <div class="py-1">
-            <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                 <i class="fas fa-user-cog mr-2"></i> Profile Settings
             </a>
             <form action="{{ route('logout') }}" method="POST" class="block">
