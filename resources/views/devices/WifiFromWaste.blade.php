@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> {{ config('app.name') }}</title>
+    <link rel="icon" href="{{ asset('assets/img/logo/system-logo.png') }}" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -61,6 +67,59 @@
         }
         .dark .progress-bar {
             background-color: #334155;
+        }
+        /* DataTables Custom Styling */
+        .dataTables_wrapper {
+            @apply bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            @apply p-6 bg-emerald-50 dark:bg-slate-800 border-b border-emerald-100 dark:border-slate-700;
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            @apply bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-slate-600 rounded-lg px-3 py-2 mx-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            @apply bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-slate-600 rounded-lg px-4 py-2 ml-2 w-64 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-emerald-400 dark:placeholder-emerald-600;
+        }
+
+        .dataTables_wrapper table.dataTable {
+            @apply border-collapse bg-white dark:bg-slate-800;
+        }
+
+        .dataTables_wrapper table.dataTable thead th {
+            @apply bg-emerald-50 dark:bg-slate-700 text-emerald-800 dark:text-emerald-200 font-medium text-xs uppercase tracking-wider px-6 py-3 border-b-2 border-emerald-100 dark:border-slate-600;
+        }
+
+        .dataTables_wrapper table.dataTable tbody td {
+            @apply px-6 py-4 text-sm text-slate-700 dark:text-slate-300 border-b border-emerald-50 dark:border-slate-700;
+        }
+
+        .dataTables_wrapper table.dataTable tbody tr {
+            @apply hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors duration-150;
+        }
+
+        .dataTables_wrapper .dataTables_info {
+            @apply p-6 text-sm text-emerald-600 dark:text-emerald-400;
+        }
+
+        .dataTables_wrapper .dataTables_paginate {
+            @apply p-6 bg-emerald-50 dark:bg-slate-800 border-t border-emerald-100 dark:border-slate-700;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            @apply px-3 py-1 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-slate-700 rounded-md mx-1 transition-colors duration-150;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            @apply bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            @apply text-emerald-300 dark:text-emerald-800 hover:bg-transparent cursor-not-allowed;
         }
     </style>
     <script>
@@ -136,7 +195,7 @@
                                     <p class="text-xs text-slate-500">{{Auth::user()->email}}</p>
                                 </div>
                                 <div class="py-1">
-                                    <a href="#profile" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                                    <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                                         <i class="fas fa-user-cog mr-2"></i> Profile Settings
                                     </a>
                                     <form action="{{ route('logout') }}" method="POST" class="block">
@@ -299,7 +358,7 @@
                     </div>
                     
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                        <table id="devicesTable" class="w-full divide-y divide-slate-200 dark:divide-slate-700">
                             <thead class="bg-slate-50 dark:bg-slate-800">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Device</th>
@@ -310,9 +369,9 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Last Seen</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700" id="deviceTableBody">
+                            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                                 @forelse($devices as $device)
-                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
+                                <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-slate-500 dark:text-slate-400">
                                             <i class="fas fa-laptop text-lg"></i>
@@ -339,7 +398,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-slate-500 dark:text-slate-400">
+                                    <td colspan="6" class="px-6 py-4 text-center text-slate-500 dark:text-slate-400">
                                         No devices found
                                     </td>
                                 </tr>
@@ -460,6 +519,43 @@
             deviceSearch.addEventListener('input', filterDevices);
             statusFilter.addEventListener('change', filterDevices);
         }
+    });
+
+    $(document).ready(function() {
+        $('#devicesTable').DataTable({
+            responsive: true,
+            pageLength: 10,
+            dom: '<"flex flex-col sm:flex-row justify-between items-center gap-4 px-2"lf>rt<"flex flex-col sm:flex-row justify-between items-center gap-4"ip>',
+            language: {
+                search: "",
+                searchPlaceholder: "Search devices...",
+                lengthMenu: `<span class="text-emerald-600 dark:text-emerald-400">Show</span> _MENU_ <span class="text-emerald-600 dark:text-emerald-400">entries</span>`,
+                info: `<span class="text-emerald-600 dark:text-emerald-400">Showing</span> _START_ <span class="text-emerald-600 dark:text-emerald-400">to</span> _END_ <span class="text-emerald-600 dark:text-emerald-400">of</span> _TOTAL_ <span class="text-emerald-600 dark:text-emerald-400">entries</span>`,
+                paginate: {
+                    first: '<i class="fas fa-angle-double-left"></i>',
+                    last: '<i class="fas fa-angle-double-right"></i>',
+                    next: '<i class="fas fa-angle-right"></i>',
+                    previous: '<i class="fas fa-angle-left"></i>'
+                }
+            },
+            drawCallback: function() {
+                // Apply dark mode styles dynamically
+                if (document.documentElement.classList.contains('dark')) {
+                    $('.dataTables_wrapper').addClass('dark');
+                }
+            }
+        });
+
+        // Update DataTables styling when dark mode is toggled
+        window.toggleDarkMode = function() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+            if (document.documentElement.classList.contains('dark')) {
+                $('.dataTables_wrapper').addClass('dark');
+            } else {
+                $('.dataTables_wrapper').removeClass('dark');
+            }
+        };
     });
 </script>
 </html>
