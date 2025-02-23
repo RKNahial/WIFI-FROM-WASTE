@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> {{ config('app.name') }}</title>
+    <title> {{ config('app.name') }} | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
@@ -90,7 +90,7 @@
 <body class="bg-slate-100 dark:bg-slate-900 transition-colors duration-200">
     <div class="min-h-screen">
         <!-- Navigation -->
-        <nav class="gradient-bg shadow-lg border-b border-[#3C8F3A] dark:border-[#3C8F3A] fixed top-0 left-0 right-0 z-50">
+        <nav class="gradient-bg shadow-lg border-b border-[#2A632A] dark:border-[#1A3F1A] fixed top-0 left-0 right-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -136,7 +136,7 @@
                                     <p class="text-xs text-slate-500">{{Auth::user()->email}}</p>
                                 </div>
                                 <div class="py-1">
-                                    <a href="#profile" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                                    <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                                         <i class="fas fa-user-cog mr-2"></i> Profile Settings
                                     </a>
                                     <form action="{{ route('logout') }}" method="POST" class="block">
@@ -290,7 +290,7 @@
                                 <p class="mt-1 text-sm text-slate-300 dark:text-slate-500">Real-time device monitoring and statistics</p>
                             </div>
                             <div class="mt-4 sm:mt-0 flex space-x-3">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#3C8F3A]/20 text-[#3C8F3A] border border-[#3C8F3A]/20">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#3C8F3A]/20 dark:bg-[#3C8F3A]/20 text-[#3C8F3A] dark:text-[#3C8F3A] border border-[#3C8F3A]/20 dark:border-[#3C8F3A]/20">
                                     <i class="fas fa-circle text-xs mr-2 text-emerald-400 dark:text-emerald-500"></i>
                                     {{ $activeUsersCount }} Active
                                 </span>
@@ -408,7 +408,7 @@
             </div>
             <div class="px-4 py-3 bg-white dark:bg-slate-800 rounded-b-xl">
                 <button onclick="toggleModal('trashBinModal')" 
-                        class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-[#3C8F3A] hover:bg-[#3C8F3A] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3C8F3A] transition-all duration-150">
+                        class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-[#3C8F3A] hover:bg-[#2A632A] dark:bg-[#3C8F3A] dark:hover:bg-[#2A632A] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3C8F3A] dark:focus:ring-[#3C8F3A] transition-all duration-150">
                     Close
                 </button>
             </div>
