@@ -31,10 +31,10 @@
     </script>
     <style>
         .gradient-bg {
-            background: linear-gradient(120deg, #059669 0%, #047857 100%);
+            background: #3C8F3A;
         }
         .dark .gradient-bg {
-            background: linear-gradient(120deg, #064e3b 0%, #022c22 100%);
+            background: #3C8F3A;
         }
         .card-gradient {
             background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
@@ -191,10 +191,10 @@
                                     <i class="fas fa-chevron-down text-sm text-white"></i>
                                 </div>
                             </button>
-                            <div id="userDropdown" class="dropdown-content hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-1 z-50 ring-1 ring-black ring-opacity-5">
+                            <div id="userDropdown" class="dropdown-content hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl py-1 z-50 ring-1 ring-black ring-opacity-5">
                                 <div class="px-4 py-2 border-b border-slate-200">
                                     <p class="text-sm font-medium text-slate-900">Admin Panel</p>
-                                    <p class="text-xs text-slate-500">{{Auth::user()->email}}</p>
+                                    <p class="text-xs text-slate-500 truncate">{{Auth::user()->email}}</p>
                                 </div>
                                 <div class="py-1">
                                     <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">

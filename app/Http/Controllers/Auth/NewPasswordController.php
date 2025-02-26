@@ -13,15 +13,16 @@ use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Contracts\View\View;
 
 class NewPasswordController extends Controller
 {
     /**
      * Display the password reset view.
      */
-    public function create(Request $request): Response
+    public function create(Request $request): View
     {
-        return Inertia::render('Auth/ResetPassword', [
+        return view('auth.passwords.reset', [
             'email' => $request->email,
             'token' => $request->route('token'),
         ]);
