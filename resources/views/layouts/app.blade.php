@@ -16,6 +16,42 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-green': '#3C8F3A',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .card-overlay {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        .bg-leaf {
+            background-image: url('{{ asset('assets/img/leaf-bg.jpg') }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .fas {
+            font-size: 1rem;
+        }
+        .text-emerald-400 .fas,
+        .text-red-400 .fas {
+            font-size: 1.25rem;
+        }
+        input::placeholder {
+            font-size: 0.95rem;
+            color: #6B7280;
+        }
+    </style>
 </head>
 <body>
     <div id="app">

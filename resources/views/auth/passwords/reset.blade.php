@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reset Password - {{ config('app.name') }}</title>
-    <link rel="icon" href="{{ asset('assets/img/system-logo.png') }}" type="image/png">
+    <link rel="icon" href="{{ asset('assets/img/logo/system-logo.png') }}" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
@@ -34,6 +34,7 @@
 <body class="bg-leaf">
     <div class="min-h-screen flex items-center justify-center p-6">
         <div class="max-w-md w-full">
+            <!-- Card Container with opacity -->
             <div class="card-overlay rounded-lg shadow-lg p-8">
                 <!-- Logo -->
                 <div class="text-center mb-8">
@@ -42,7 +43,10 @@
                          class="h-16 mx-auto">
                 </div>
 
-                <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">{{ __('Reset Password') }}</h2>
+                <h2 class="text-2xl font-bold text-center text-gray-700 mb-4">{{ __('Reset Password') }}</h2>
+                <div class="mb-6 text-sm text-gray-600">
+                    {{ __('Please enter your new password to complete the password reset process.') }}
+                </div>
 
                 <form method="POST" action="{{ route('password.store') }}" class="space-y-6">
                     @csrf
