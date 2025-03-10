@@ -240,7 +240,7 @@
                 </div>
 
                 <!-- Metrics Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <!-- Total Bottles/Cans Card -->
                     <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
                         <div class="flex items-center justify-between">
@@ -279,65 +279,22 @@
                         </div>
                     </div>
 
-                    <!-- Total Bandwidth Card -->
+                    <!-- Router Usage Card -->
                     <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-500 text-sm font-medium">Total Bandwidth</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
-                                    {{ $bandwidthStats['total'] ?? '0 B' }}
-                                </p>
-                            </div>
-                            <div class="bg-indigo-100 dark:bg-indigo-900 p-3 rounded-xl">
-                                <i class="fas fa-database text-2xl text-indigo-600 dark:text-indigo-500"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex items-center text-indigo-600 dark:text-indigo-500 text-sm">
-                            <i class="fas fa-wifi mr-2"></i>
-                            <span>Data Served</span>
-                        </div>
-                    </div>
-
-                    <!-- Today's Bandwidth Card
-                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-sm font-medium">Today's Bandwidth</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
-                                    {{ $bandwidthStats['today'] ?? '0 B' }}
-                                </p>
-                            </div>
-                            <div class="bg-rose-100 dark:bg-rose-900 p-3 rounded-xl">
-                                <i class="fas fa-bolt text-2xl text-rose-600 dark:text-rose-500"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex items-center text-rose-600 dark:text-rose-500 text-sm">
-                            <i class="fas fa-chart-area mr-2"></i>
-                            <span>Current Usage</span>
-                        </div>
-                    </div> -->
-
-                    <!-- Router Bandwidth Card -->
-                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-sm font-medium">Router Usage</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
-                                    {{ $routerBandwidth['total_rate'] }}
+                                <p class="text-slate-500 text-sm font-medium">Router Usage ({{ $routerUsage['active_users_count'] }} Users)</p>
+                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1" data-router-usage="{{ $routerUsage['total_usage'] }}">
+                                    {{ $routerUsage['total_usage'] }}
                                 </p>
                             </div>
                             <div class="bg-purple-100 dark:bg-purple-900 p-3 rounded-xl">
                                 <i class="fas fa-network-wired text-2xl text-purple-600 dark:text-purple-500"></i>
                             </div>
                         </div>
-                        <div class="mt-4">
-                            <div class="flex justify-between text-sm text-slate-500 mb-1">
-                                <span>Download: {{ $routerBandwidth['rx_rate'] }}</span>
-                                <span>Upload: {{ $routerBandwidth['tx_rate'] }}</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-bar-fill bg-purple-500" style="width: 100%"></div>
-                            </div>
+                        <div class="mt-4 flex items-center text-purple-600 dark:text-purple-500 text-sm">
+                            <i class="fas fa-chart-line mr-2"></i>
+                            <span>Total Data Transferred</span>
                         </div>
                     </div>
                 </div>
@@ -558,20 +515,24 @@
                 $('.dataTables_wrapper').removeClass('dark');
             }
         };
+
+        // Add auto-refresh functionality
+        setInterval(function() {
+            // Refresh the page to update usage statistics
+            location.reload();
+        }, 300000); // Refresh every 5 minutes
     });
 
     function generateUserReport() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Add logo
-        // const logoImg = new Image();
-        // logoImg.src = "{{ asset('assets/img/logo/logo-green.png') }}";
-        // doc.addImage(logoImg, 'PNG', 15, 15, 30, 30);
+        // Get router usage from data attribute
+        const routerUsage = document.querySelector('[data-router-usage]').getAttribute('data-router-usage');
         
-        // Title
+        // Title Section
         doc.setFontSize(20);
-        doc.setTextColor(5, 150, 105); // Emerald color
+        doc.setTextColor(5, 150, 105);
         doc.text('WIFI FROM WASTE - User Report', 15, 25);
         
         // Date
@@ -579,59 +540,62 @@
         doc.setTextColor(100);
         doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 35);
         
-        // User Information
+        // User Information Section
         doc.setFontSize(14);
         doc.setTextColor(5, 150, 105);
         doc.text('User Information', 15, 50);
         
         doc.setFontSize(12);
         doc.setTextColor(60);
-        doc.text(`Name: {{Auth::user()->name}}`, 15, 60);
-        doc.text(`Email: {{Auth::user()->email}}`, 15, 70);
-        doc.text(`Account Created: {{Auth::user()->created_at->format('F j, Y')}}`, 15, 80);
+        doc.text(`Name: {{Auth::user()->name}}`, 25, 65);
+        doc.text(`Email: {{Auth::user()->email}}`, 25, 75);
+        doc.text(`Account Created: {{Auth::user()->created_at->format('F j, Y')}}`, 25, 85);
+        
+        // Router Usage Statistics Section
+        doc.setFontSize(14);
+        doc.setTextColor(5, 150, 105);
+        doc.text('Router Usage Statistics', 15, 105);
+
+        doc.setFontSize(12);
+        doc.setTextColor(60);
+        doc.text(`Total Data Transferred: ${routerUsage}`, 25, 120);
+        doc.text(`Active Users: {{ $routerUsage['active_users_count'] }}`, 25, 130);
         
         // Connected Devices Section
         doc.setFontSize(14);
         doc.setTextColor(5, 150, 105);
-        doc.text('Connected Devices Summary', 15, 100);
+        doc.text('Connected Devices Summary', 15, 150);
         
         // Create devices table
         const deviceData = [];
         const table = document.getElementById('devicesTable');
         if (table) {
             const rows = table.getElementsByTagName('tr');
-            for (let i = 1; i < rows.length; i++) { // Skip header row
+            for (let i = 1; i < rows.length; i++) {
                 const cells = rows[i].getElementsByTagName('td');
                 if (cells.length > 0) {
                     deviceData.push([
-                        cells[1].textContent.trim(), // Name
-                        cells[2].textContent.trim(), // MAC Address
-                        cells[3].textContent.trim(), // Status
-                        cells[4].textContent.trim(), // Bandwidth
-                        cells[5].textContent.trim()  // Last Seen
+                        cells[1].textContent.trim(),
+                        cells[2].textContent.trim(),
+                        cells[3].textContent.trim(),
+                        cells[4].textContent.trim(),
+                        cells[5].textContent.trim()
                     ]);
                 }
             }
         }
         
+        // Add table with proper spacing
         doc.autoTable({
-            startY: 110,
+            startY: 160,
             head: [['Device Name', 'MAC Address', 'Status', 'Bandwidth Used', 'Last Seen']],
             body: deviceData,
             theme: 'grid',
             headStyles: { fillColor: [5, 150, 105] },
-            styles: { fontSize: 8 }
+            styles: { fontSize: 8 },
+            margin: { left: 15, right: 15 }
         });
-        
-        // Footer
-        const pageCount = doc.internal.getNumberOfPages();
-        doc.setFontSize(8);
-        doc.setTextColor(100);
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10);
-        }
-        
+
         // Save the PDF
         doc.save(`wifi-from-waste-report-${new Date().toISOString().split('T')[0]}.pdf`);
     }

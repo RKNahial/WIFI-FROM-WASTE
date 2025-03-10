@@ -9,6 +9,8 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Device;
+use App\Models\RouterUsage;
+use Carbon\Carbon;
 
 class MikrotikService
 {
@@ -226,71 +228,41 @@ class MikrotikService
         }
     }
 
-    public function getRouterBandwidth()
+    public function getRouterUsage()
     {
-        if (!$this->isConnected) {
-            Log::warning('Not connected to Mikrotik');
-            return $this->getEmptyBandwidthStats();
-        }
-
         try {
-            // Get all interfaces first
-            $query = new Query('/interface/print');
-            $interfaces = $this->client->query($query)->read();
-            
-            if (empty($interfaces)) {
-                Log::error("No interfaces found");
-                return $this->getEmptyBandwidthStats();
+            if (!$this->isConnected) {
+                Log::warning('Cannot get router usage: Not connected to MikroTik');
+                return $this->getEmptyUsageStats();
             }
 
-            // Find the main interface (usually ether1 or bridge1)
-            $interface = null;
-            foreach ($interfaces as $iface) {
-                if (isset($iface['name']) && ($iface['name'] === 'ether1' || $iface['name'] === 'bridge1')) {
-                    $interface = $iface;
-                    break;
+            // Get active users and their bandwidth usage
+            $activeUsers = $this->getActiveUsers();
+            $totalBytes = 0;
+
+            if (!empty($activeUsers['data'])) {
+                foreach ($activeUsers['data'] as $user) {
+                    // Sum up bytes-in and bytes-out for each user
+                    $totalBytes += ($user['bytes-in'] ?? 0) + ($user['bytes-out'] ?? 0);
                 }
             }
 
-            if (!$interface) {
-                Log::error("Main interface not found");
-                return $this->getEmptyBandwidthStats();
-            }
-
-            // Get traffic statistics
-            $query = new Query('/interface/monitor-traffic');
-            $query->equal('interface', $interface['name']);
-            $query->equal('once', '');
-            
-            sleep(1); // Wait for 1 second to get accurate per-second readings
-            
-            $response = $this->client->query($query)->read();
-            
-            if (isset($response[0])) {
-                $rx_bits = $response[0]['rx-bits-per-second'] ?? 0;
-                $tx_bits = $response[0]['tx-bits-per-second'] ?? 0;
-                
-                Log::info("Interface {$interface['name']} bandwidth - RX: {$rx_bits} bits/s, TX: {$tx_bits} bits/s");
-                
-                return [
-                    'rx_rate' => $this->formatBytes($rx_bits / 8) . '/s',
-                    'tx_rate' => $this->formatBytes($tx_bits / 8) . '/s',
-                    'total_rate' => $this->formatBytes(($rx_bits + $tx_bits) / 8) . '/s'
-                ];
-            }
+            return [
+                'total_usage' => $this->formatBytes($totalBytes),
+                'active_users_count' => count($activeUsers['data'])
+            ];
         } catch (\Exception $e) {
-            Log::error('Error getting router bandwidth: ' . $e->getMessage());
+            Log::error('Error getting router usage: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return $this->getEmptyUsageStats();
         }
-
-        return $this->getEmptyBandwidthStats();
     }
 
-    private function getEmptyBandwidthStats()
+    private function getEmptyUsageStats()
     {
         return [
-            'rx_rate' => '0 B/s',
-            'tx_rate' => '0 B/s',
-            'total_rate' => '0 B/s'
+            'total_usage' => '0 B',
+            'active_users_count' => 0
         ];
     }
 
@@ -301,5 +273,35 @@ class MikrotikService
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
         return round($bytes / pow(1024, $pow), $precision) . ' ' . $units[$pow];
+    }
+
+    protected function getMainInterface()
+    {
+        if (!$this->isConnected) {
+            return null;
+        }
+
+        try {
+            // Get the interface statistics directly
+            $interface = config('mikrotik.interface', 'wlan1');
+            $query = new Query('/interface/print');
+            $query->where('name', $interface);
+            
+            $response = $this->client->query($query)->read();
+            Log::info('Raw interface response:', $response); // Debug log
+            
+            if (!empty($response)) {
+                return [
+                    'name' => $interface,
+                    'rx-byte' => (int)($response[0]['rx-byte'] ?? 0),
+                    'tx-byte' => (int)($response[0]['tx-byte'] ?? 0)
+                ];
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Error getting interface statistics: ' . $e->getMessage());
+            return null;
+        }
     }
 }

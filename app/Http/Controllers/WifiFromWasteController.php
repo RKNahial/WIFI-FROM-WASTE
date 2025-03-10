@@ -19,19 +19,21 @@ class WifiFromWasteController extends Controller
     {
         try {
             $activeUsers = $this->mikrotik->getActiveUsers();
-            $bandwidthStats = $this->mikrotik->getBandwidthUsage();
-            $routerBandwidth = $this->mikrotik->getRouterBandwidth();
+            $routerUsage = $this->mikrotik->getRouterUsage();
             
             // Get all devices from database
             $devices = Device::orderBy('last_seen', 'desc')->get();
             $activeUsersCount = $devices->where('status', 'Active')->count();
 
+            // Debug logging
+            Log::info('Router Usage Data:', $routerUsage);
+            Log::info('Active Users:', ['count' => $activeUsersCount, 'data' => $activeUsers]);
+
             return view('devices.WifiFromWaste', [
                 'devices' => $devices,
                 'activeUsers' => $activeUsers['data'],
                 'activeUsersCount' => $activeUsersCount,
-                'bandwidthStats' => $bandwidthStats,
-                'routerBandwidth' => $routerBandwidth,
+                'routerUsage' => $routerUsage,
                 'bottleStats' => [
                     'total' => 0,
                     'today' => 0
@@ -43,11 +45,10 @@ class WifiFromWasteController extends Controller
                 'devices' => collect([]),
                 'activeUsers' => ['data' => []],
                 'activeUsersCount' => 0,
-                'bandwidthStats' => ['total' => '0 B', 'today' => '0 B'],
-                'routerBandwidth' => [
-                    'rx_rate' => '0 B/s',
-                    'tx_rate' => '0 B/s',
-                    'total_rate' => '0 B/s'
+                'routerUsage' => [
+                    'total_usage' => '0 B',
+                    'active_users_count' => 0,
+                    'last_reset' => now()->format('M j, Y h:i A')
                 ],
                 'bottleStats' => ['total' => 0, 'today' => 0]
             ]);
