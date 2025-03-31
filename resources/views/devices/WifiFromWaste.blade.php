@@ -250,41 +250,41 @@
 
                 <!-- Metrics Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <!-- Total Bottles/Cans Card -->
+                    <!-- Total Plastic Bottles Card -->
                     <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-500 text-sm font-medium">Total Bottles & Cans</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
-                                    {{ $bottleStats['total'] ?? 0 }}
+                                <p class="text-slate-500 text-sm font-medium">Total Plastic Bottles</p>
+                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1" data-stat="plastic_total">
+                                    {{ $bottleStats['plastic_total'] ?? 0 }}
                                 </p>
                             </div>
                             <div class="bg-emerald-100 dark:bg-emerald-900 p-3 rounded-xl">
-                                <i class="fas fa-recycle text-2xl text-emerald-600 dark:text-emerald-500"></i>
+                                <i class="fas fa-bottle-plastic text-2xl text-emerald-600 dark:text-emerald-500"></i>
                             </div>
                         </div>
                         <div class="mt-4 flex items-center text-emerald-600 dark:text-emerald-500 text-sm">
                             <i class="fas fa-chart-line mr-2"></i>
-                            <span>Overall Collection</span>
+                            <span>Overall Plastic Collection</span>
                         </div>
                     </div>
 
-                    <!-- Today's Bottles/Cans Card -->
+                    <!-- Total Cans Card -->
                     <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-500 text-sm font-medium">Today's Collection</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
-                                    {{ $bottleStats['today'] ?? 0 }}
+                                <p class="text-slate-500 text-sm font-medium">Total Cans</p>
+                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1" data-stat="can_total">
+                                    {{ $bottleStats['can_total'] ?? 0 }}
                                 </p>
                             </div>
                             <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-xl">
-                                <i class="fas fa-box text-2xl text-blue-600 dark:text-blue-500"></i>
+                                <i class="fas fa-can-drink text-2xl text-blue-600 dark:text-blue-500"></i>
                             </div>
                         </div>
                         <div class="mt-4 flex items-center text-blue-600 dark:text-blue-500 text-sm">
-                            <i class="fas fa-clock mr-2"></i>
-                            <span>Last 24 Hours</span>
+                            <i class="fas fa-chart-line mr-2"></i>
+                            <span>Overall Can Collection</span>
                         </div>
                     </div>
 
@@ -701,5 +701,22 @@
             counter.style.display = count > 0 ? 'block' : 'none';
         }
     }
+</script>
+<script>
+    Echo.channel('material-detection')
+        .listen('MaterialDetected', (e) => {
+            console.log('Material detection event received:', e);
+            // Update the plastic total
+            const plasticElement = document.querySelector('[data-stat="plastic_total"]');
+            if (plasticElement) {
+                plasticElement.textContent = e.stats.plastic_total;
+            }
+            
+            // Update the can total
+            const canElement = document.querySelector('[data-stat="can_total"]');
+            if (canElement) {
+                canElement.textContent = e.stats.can_total;
+            }
+        });
 </script>
 </html>

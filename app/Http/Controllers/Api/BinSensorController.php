@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Notifications\DatabaseNotification;
 use App\Models\User;
 use App\Events\BinStatusUpdated;
+use App\Models\MaterialDetection;
+use App\Events\MaterialDetected;
 
 class BinSensorController extends Controller
 {
@@ -83,6 +85,43 @@ class BinSensorController extends Controller
                 'success' => false,
                 'message' => 'Error updating bin status',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function recordDetection(Request $request)
+    {
+        try {
+            $request->validate([
+                'material_type' => 'required|string|in:plastic,can',
+                'count' => 'required|integer|min:0',
+            ]);
+
+            $detection = MaterialDetection::create([
+                'material_type' => $request->material_type,
+                'count' => $request->count,
+                'detected_at' => now(),
+            ]);
+
+            // Update the bottleStats in your view
+            $stats = [
+                'plastic_total' => MaterialDetection::where('material_type', 'plastic')->sum('count'),
+                'can_total' => MaterialDetection::where('material_type', 'can')->sum('count'),
+                'today' => MaterialDetection::whereDate('detected_at', today())->sum('count')
+            ];
+
+            event(new MaterialDetected($stats));
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error recording detection: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error recording detection'
             ], 500);
         }
     }

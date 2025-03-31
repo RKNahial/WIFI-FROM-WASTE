@@ -10,6 +10,7 @@ use App\Notifications\BinFullNotification;
 use App\Models\BinStatus;
 use App\Events\BinStatusUpdated;
 use Illuminate\Support\Facades\DB;
+use App\Models\MaterialDetection;
 
 class WifiFromWasteController extends Controller
 {
@@ -41,8 +42,9 @@ class WifiFromWasteController extends Controller
                 'bandwidthStats' => $bandwidthStats,
                 'routerUsage' => $routerUsage,
                 'bottleStats' => [
-                    'total' => 0,
-                    'today' => 0
+                    'plastic_total' => MaterialDetection::where('material_type', 'plastic')->sum('count'),
+                    'can_total' => MaterialDetection::where('material_type', 'can')->sum('count'),
+                    'today' => MaterialDetection::whereDate('detected_at', today())->sum('count')
                 ],
                 'binStatus' => $binStatus,
                 'notifications' => DatabaseNotification::where('type', BinFullNotification::class)
@@ -72,7 +74,7 @@ class WifiFromWasteController extends Controller
                 'routerUsage' => [
                     'total_usage' => '0 B'
                 ],
-                'bottleStats' => ['total' => 0, 'today' => 0],
+                'bottleStats' => ['plastic_total' => 0, 'can_total' => 0, 'today' => 0],
                 'binStatus' => null,
                 'notifications' => collect([])
             ]);

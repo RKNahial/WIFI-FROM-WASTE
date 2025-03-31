@@ -27,3 +27,5 @@ Route::get('/test', function () {
 
 Route::post('/bin-status', [BinSensorController::class, 'updateStatus'])
     ->name('api.bin.status');  // Remove middleware temporarily
+
+Route::post('/material-detection', [BinSensorController::class, 'recordDetection']);
