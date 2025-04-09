@@ -16,6 +16,18 @@ class WifiFromWasteController extends Controller
 {
     protected $mikrotik;
 
+    private const RATES = [
+        'plastic_rate' => 4.00,  // ₱4 per kg for plastic
+        'can_rate' => 5.00,     // ₱5 per kg for sardine cans
+        'paper_rate' => 0.50    // ₱0.50 per kg for paper
+    ];
+
+    private const WEIGHTS = [
+        'plastic' => 0.012,    // 12g per plastic bottle (83.33 bottles = 1kg)
+        'can' => 0.050,       // 50g per sardine can (20 cans = 1kg)
+        'paper' => 0.0045     // 4.5g per A4 sheet (222.22 sheets = 1kg)
+    ];
+
     public function __construct(MikrotikService $mikrotik)
     {
         $this->mikrotik = $mikrotik;
@@ -34,6 +46,25 @@ class WifiFromWasteController extends Controller
 
             // Get the latest bin status
             $binStatus = \App\Models\BinStatus::latest('last_checked')->first();
+
+            $plasticCount = MaterialDetection::where('material_type', 'plastic')->sum('count');
+            $canCount = MaterialDetection::where('material_type', 'can')->sum('count');
+            
+            // Calculate weights in kg
+            $plasticWeight = ($plasticCount * self::WEIGHTS['plastic']);
+            $canWeight = ($canCount * self::WEIGHTS['can']);
+            
+            // Calculate revenue
+            $estimatedRevenue = [
+                'plastic_rate' => self::RATES['plastic_rate'],
+                'can_rate' => self::RATES['can_rate'],
+                'paper_rate' => self::RATES['paper_rate'],
+                'plastic' => $plasticWeight * self::RATES['plastic_rate'],
+                'cans' => $canWeight * self::RATES['can_rate'],
+                'paper' => 0,
+                'total' => ($plasticWeight * self::RATES['plastic_rate']) + 
+                          ($canWeight * self::RATES['can_rate'])
+            ];
 
             return view('devices.WifiFromWaste', [
                 'devices' => $devices,
@@ -62,7 +93,8 @@ class WifiFromWasteController extends Controller
                             'actioned_by' => $notification->data['actioned_by'] ?? null,
                             'action_timestamp' => $notification->data['action_timestamp'] ?? null
                         ];
-                    })
+                    }),
+                'estimatedRevenue' => $estimatedRevenue,
             ]);
         } catch (\Exception $e) {
             Log::error('Error in WifiFromWaste index: ' . $e->getMessage());
@@ -76,7 +108,16 @@ class WifiFromWasteController extends Controller
                 ],
                 'bottleStats' => ['plastic_total' => 0, 'can_total' => 0, 'today' => 0],
                 'binStatus' => null,
-                'notifications' => collect([])
+                'notifications' => collect([]),
+                'estimatedRevenue' => [
+                    'plastic_rate' => self::RATES['plastic_rate'],
+                    'can_rate' => self::RATES['can_rate'],
+                    'paper_rate' => self::RATES['paper_rate'],
+                    'plastic' => 0,
+                    'cans' => 0,
+                    'paper' => 0,
+                    'total' => 0
+                ],
             ]);
         }
     }

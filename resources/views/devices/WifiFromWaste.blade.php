@@ -13,7 +13,7 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -184,7 +184,7 @@
                         </div>
                         <!-- Download Report Button -->
                         <button onclick="generateUserReport()" 
-                           class="inline-flex items-center px-4 py-2 bg-white text-emerald-800 text-sm font-medium rounded-lg hover:bg-emerald-50 transition-all duration-150 shadow-md hover:shadow-lg">
+                           class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-md">
                             <i class="fas fa-download mr-2"></i>
                             Generate Report
                         </button>
@@ -249,61 +249,98 @@
                 </div>
 
                 <!-- Metrics Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <!-- Total Plastic Bottles Card -->
-                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-sm font-medium">Total Plastic Bottles</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1" data-stat="plastic_total">
-                                    {{ $bottleStats['plastic_total'] ?? 0 }}
-                                </p>
+                    <div class="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700 h-[120px]">
+                        <div class="flex flex-col h-full">
+                            <div class="flex items-center justify-between mb-2">
+                                <div>
+                                    <p class="text-slate-500 text-sm font-medium">Total Plastic Bottles</p>
+                                    <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1" data-stat="plastic_total">
+                                        {{ $bottleStats['plastic_total'] ?? 0 }}
+                                    </p>
+                                </div>
+                                <div class="bg-emerald-100 dark:bg-emerald-900 p-2 rounded-lg">
+                                    <i class="fas fa-recycle text-lg text-emerald-600 dark:text-emerald-500"></i>
+                                </div>
                             </div>
-                            <div class="bg-emerald-100 dark:bg-emerald-900 p-3 rounded-xl">
-                                <i class="fas fa-bottle-plastic text-2xl text-emerald-600 dark:text-emerald-500"></i>
+                            <div class="mt-auto flex items-center text-emerald-600 dark:text-emerald-500 text-sm">
+                                <i class="fas fa-chart-line mr-1"></i>
+                                <span>Overall Plastic Collection</span>
                             </div>
-                        </div>
-                        <div class="mt-4 flex items-center text-emerald-600 dark:text-emerald-500 text-sm">
-                            <i class="fas fa-chart-line mr-2"></i>
-                            <span>Overall Plastic Collection</span>
                         </div>
                     </div>
 
                     <!-- Total Cans Card -->
-                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-sm font-medium">Total Cans</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1" data-stat="can_total">
-                                    {{ $bottleStats['can_total'] ?? 0 }}
-                                </p>
+                    <div class="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700 h-[120px]">
+                        <div class="flex flex-col h-full">
+                            <div class="flex items-center justify-between mb-2">
+                                <div>
+                                    <p class="text-slate-500 text-sm font-medium">Total Cans</p>
+                                    <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1" data-stat="can_total">
+                                        {{ $bottleStats['can_total'] ?? 0 }}
+                                    </p>
+                                </div>
+                                <div class="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                                    <i class="fas fa-trash-restore text-lg text-blue-600 dark:text-blue-500"></i>
+                                </div>
                             </div>
-                            <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-xl">
-                                <i class="fas fa-can-drink text-2xl text-blue-600 dark:text-blue-500"></i>
+                            <div class="mt-auto flex items-center text-blue-600 dark:text-blue-500 text-sm">
+                                <i class="fas fa-chart-line mr-1"></i>
+                                <span>Overall Can Collection</span>
                             </div>
-                        </div>
-                        <div class="mt-4 flex items-center text-blue-600 dark:text-blue-500 text-sm">
-                            <i class="fas fa-chart-line mr-2"></i>
-                            <span>Overall Can Collection</span>
                         </div>
                     </div>
 
                     <!-- Router Usage Card -->
-                    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-sm font-medium">Router Usage</p>
-                                <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
-                                    {{ $routerUsage['total_usage'] }}
-                                </p>
+                    <div class="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700 h-[120px]">
+                        <div class="flex flex-col h-full">
+                            <div class="flex items-center justify-between mb-2">
+                                <div>
+                                    <p class="text-slate-500 text-sm font-medium">Router Usage</p>
+                                    <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1" data-stat="router_usage">
+                                        {{ $routerUsage['total_usage'] }}
+                                    </p>
+                                </div>
+                                <div class="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg">
+                                    <i class="fas fa-network-wired text-lg text-purple-600 dark:text-purple-500"></i>
+                                </div>
                             </div>
-                            <div class="bg-purple-100 dark:bg-purple-900 p-3 rounded-xl">
-                                <i class="fas fa-network-wired text-2xl text-purple-600 dark:text-purple-500"></i>
+                            <div class="mt-auto flex items-center text-purple-600 dark:text-purple-500 text-sm">
+                                <i class="fas fa-chart-line mr-1"></i>
+                                <span>Total Data Transferred</span>
                             </div>
                         </div>
-                        <div class="mt-4 flex items-center text-purple-600 dark:text-purple-500 text-sm">
-                            <i class="fas fa-chart-line mr-2"></i>
-                            <span>Total Data Transferred</span>
+                    </div>
+
+                    <!-- Estimated Revenue Card -->
+                    <div class="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700 h-[120px]">
+                        <div class="flex flex-col h-full">
+                            <div class="flex items-center justify-between mb-1">
+                                <div>
+                                    <p class="text-slate-500 text-sm font-medium">Estimated Revenue</p>
+                                    <p class="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1" data-stat="estimated_revenue">
+                                        ₱{{ number_format($estimatedRevenue['total'] ?? 0, 2) }}
+                                    </p>
+                                </div>
+                                <div class="bg-yellow-100 dark:bg-yellow-900 p-2 rounded-lg">
+                                    <i class="fas fa-coins text-lg text-yellow-600 dark:text-yellow-500"></i>
+                                </div>
+                            </div>
+                            <div class="mt-auto grid grid-cols-3 gap-1 text-xs">
+                                <div class="flex flex-col">
+                                    <span class="text-slate-500 dark:text-slate-400">Plastic</span>
+                                    <span class="text-yellow-600 dark:text-yellow-500">₱{{ number_format($estimatedRevenue['plastic'] ?? 0, 2) }}</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-slate-500 dark:text-slate-400">Cans</span>
+                                    <span class="text-yellow-600 dark:text-yellow-500">₱{{ number_format($estimatedRevenue['cans'] ?? 0, 2) }}</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-slate-500 dark:text-slate-400">Paper</span>
+                                    <span class="text-yellow-600 dark:text-yellow-500">₱{{ number_format($estimatedRevenue['paper'] ?? 0, 2) }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -538,79 +575,140 @@
     });
 
     function generateUserReport() {
+        // Initialize jsPDF
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Add logo
-        // const logoImg = new Image();
-        // logoImg.src = "{{ asset('assets/img/logo/logo-green.png') }}";
-        // doc.addImage(logoImg, 'PNG', 15, 15, 30, 30);
+        // Add header with logo
+        doc.setFillColor(34, 197, 94); // Emerald color
+        doc.rect(0, 0, 220, 40, 'F');
         
-        // Title
-        doc.setFontSize(20);
-        doc.setTextColor(5, 150, 105); // Emerald color
-        doc.text('WIFI FROM WASTE - User Report', 15, 25);
+        // Add white text for header
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.text('WiFi from Waste System Report', 20, 25);
         
-        // Date
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 35);
+        // Reset text color to black
+        doc.setTextColor(0, 0, 0);
         
-        // User Information
-        doc.setFontSize(14);
-        doc.setTextColor(5, 150, 105);
-        doc.text('User Information', 15, 50);
+        // Add timestamp
+        doc.setFontSize(11);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 50);
         
+        // Add statistics section with better formatting
+        doc.setFontSize(16);
+        doc.setTextColor(34, 197, 94);
+        doc.text('Collection Statistics', 20, 70);
+        
+        // Add stats in a more structured way with aligned values
+        doc.setTextColor(0, 0, 0);
         doc.setFontSize(12);
-        doc.setTextColor(60);
-        doc.text(`Name: {{Auth::user()->name}}`, 15, 60);
-        doc.text(`Email: {{Auth::user()->email}}`, 15, 70);
-        doc.text(`Account Created: {{Auth::user()->created_at->format('F j, Y')}}`, 15, 80);
         
-        // Connected Devices Section
-        doc.setFontSize(14);
-        doc.setTextColor(5, 150, 105);
-        doc.text('Connected Devices Summary', 15, 100);
-        
-        // Create devices table
-        const deviceData = [];
-        const table = document.getElementById('devicesTable');
-        if (table) {
-            const rows = table.getElementsByTagName('tr');
-            for (let i = 1; i < rows.length; i++) { // Skip header row
-                const cells = rows[i].getElementsByTagName('td');
-                if (cells.length > 0) {
-                    deviceData.push([
-                        cells[1].textContent.trim(), // Name
-                        cells[2].textContent.trim(), // MAC Address
-                        cells[3].textContent.trim(), // Status
-                        cells[4].textContent.trim(), // Bandwidth
-                        cells[5].textContent.trim()  // Last Seen
-                    ]);
-                }
-            }
-        }
+        const stats = [
+            ['Total Plastic Bottles:', document.querySelector('[data-stat="plastic_total"]')?.textContent.trim() || '0'],
+            ['Total Cans:', document.querySelector('[data-stat="can_total"]')?.textContent.trim() || '0'],
+            ['Router Usage:', document.querySelector('[data-stat="router_usage"]')?.textContent.trim() || '0']
+        ];
+
+        // Calculate the widest label for alignment
+        const labelWidth = 80;
         
         doc.autoTable({
-            startY: 110,
-            head: [['Device Name', 'MAC Address', 'Status', 'Bandwidth Used', 'Last Seen']],
-            body: deviceData,
-            theme: 'grid',
-            headStyles: { fillColor: [5, 150, 105] },
-            styles: { fontSize: 8 }
+            startY: 80,
+            head: [],
+            body: stats,
+            theme: 'plain',
+            styles: { 
+                fontSize: 12,
+                cellPadding: 5
+            },
+            columnStyles: {
+                0: { 
+                    fontStyle: 'bold',
+                    cellWidth: labelWidth 
+                },
+                1: { 
+                    cellWidth: 70,
+                    halign: 'right' // Right align the values
+                }
+            }
         });
         
-        // Footer
+        // Add connected devices section
+        doc.setFontSize(16);
+        doc.setTextColor(34, 197, 94);
+        doc.text('Connected Devices', 20, 130);
+        
+        // Get and format table data
+        const table = $('#devicesTable').DataTable();
+        const tableData = table.rows().data().toArray().map(row => {
+            const statusText = row[3].includes('Active') ? 'Active' : 'Disconnected';
+            
+            return [
+                row[1],          // Name
+                row[2],          // MAC Address
+                statusText,      // Status (cleaned)
+                row[4],          // Bandwidth
+                row[5]           // Last Seen
+            ];
+        });
+        
+        // Add devices table with better styling
+        doc.autoTable({
+            startY: 140,
+            head: [['Name', 'MAC Address', 'Status', 'Bandwidth', 'Last Seen']],
+            body: tableData,
+            theme: 'grid',
+            styles: {
+                fontSize: 10,
+                cellPadding: 5,
+                lineColor: [34, 197, 94],
+                lineWidth: 0.1
+            },
+            headStyles: {
+                fillColor: [34, 197, 94],
+                textColor: [255, 255, 255],
+                fontSize: 11
+            },
+            alternateRowStyles: {
+                fillColor: [240, 255, 244]
+            },
+            columnStyles: {
+                3: { // Bandwidth column
+                    halign: 'right'
+                }
+            }
+        });
+        
+        // Add footer to all pages
         const pageCount = doc.internal.getNumberOfPages();
-        doc.setFontSize(8);
-        doc.setTextColor(100);
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
-            doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10);
+            
+            // Add footer line
+            doc.setDrawColor(34, 197, 94);
+            doc.line(20, doc.internal.pageSize.height - 20, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 20);
+            
+            // Add page number
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(
+                `Page ${i} of ${pageCount}`, 
+                doc.internal.pageSize.width / 2, 
+                doc.internal.pageSize.height - 10, 
+                { align: 'center' }
+            );
+            
+            // Add footer text
+            doc.text(
+                'WiFi from Waste System - Generated Report', 
+                20, 
+                doc.internal.pageSize.height - 10
+            );
         }
         
         // Save the PDF
-        doc.save(`wifi-from-waste-report-${new Date().toISOString().split('T')[0]}.pdf`);
+        doc.save('wifi-from-waste-report.pdf');
     }
 
     function markAsRead(notificationId) {
