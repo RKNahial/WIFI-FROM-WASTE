@@ -32,11 +32,12 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/notifications/{id}/mark-as-read', [WifiFromWasteController::class, 'markNotificationAsRead'])
         ->name('notifications.mark-as-read');
+
+    Route::get('/generate-report', [App\Http\Controllers\ReportController::class, 'generateReport'])
+        ->name('generate.report');
 });
 
 require __DIR__.'/auth.php';
 
 // Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 

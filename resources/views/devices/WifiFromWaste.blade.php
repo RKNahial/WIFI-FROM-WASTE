@@ -541,6 +541,32 @@
         $('#devicesTable').DataTable({
             responsive: true,
             pageLength: 10,
+            processing: true,
+            data: [], // Initialize with empty data
+            columns: [
+                { 
+                    data: null,
+                    defaultContent: '<i class="fas fa-laptop text-lg"></i>',
+                    orderable: false,
+                    className: 'text-slate-500 dark:text-slate-400'
+                },
+                { data: 'name' },
+                { data: 'mac_address' },
+                { 
+                    data: 'status',
+                    render: function(data, type, row) {
+                        const statusClass = data === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                        return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${data}</span>`;
+                    }
+                },
+                { data: 'bandwidth_used' },
+                { 
+                    data: 'last_seen',
+                    render: function(data, type, row) {
+                        return data ? moment(data).fromNow() : 'Never';
+                    }
+                }
+            ],
             dom: '<"flex flex-col sm:flex-row justify-between items-center gap-4 px-2"lf>rt<"flex flex-col sm:flex-row justify-between items-center gap-4"ip>',
             language: {
                 search: "",
@@ -552,163 +578,31 @@
                     last: '<i class="fas fa-angle-double-right"></i>',
                     next: '<i class="fas fa-angle-right"></i>',
                     previous: '<i class="fas fa-angle-left"></i>'
-                }
-            },
-            drawCallback: function() {
-                // Apply dark mode styles dynamically
-                if (document.documentElement.classList.contains('dark')) {
-                    $('.dataTables_wrapper').addClass('dark');
-                }
+                },
+                emptyTable: "No devices found"
             }
         });
-
-        // Update DataTables styling when dark mode is toggled
-        window.toggleDarkMode = function() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
-            if (document.documentElement.classList.contains('dark')) {
-                $('.dataTables_wrapper').addClass('dark');
-            } else {
-                $('.dataTables_wrapper').removeClass('dark');
-            }
-        };
     });
 
     function generateUserReport() {
-        // Initialize jsPDF
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Add header with logo
-        doc.setFillColor(34, 197, 94); // Emerald color
-        doc.rect(0, 0, 220, 40, 'F');
-        
-        // Add white text for header
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
-        doc.text('WiFi from Waste System Report', 20, 25);
-        
-        // Reset text color to black
-        doc.setTextColor(0, 0, 0);
-        
-        // Add timestamp
-        doc.setFontSize(11);
-        doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 50);
-        
-        // Add statistics section with better formatting
-        doc.setFontSize(16);
-        doc.setTextColor(34, 197, 94);
-        doc.text('Collection Statistics', 20, 70);
-        
-        // Add stats in a more structured way with aligned values
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-        
-        const stats = [
-            ['Total Plastic Bottles:', document.querySelector('[data-stat="plastic_total"]')?.textContent.trim() || '0'],
-            ['Total Cans:', document.querySelector('[data-stat="can_total"]')?.textContent.trim() || '0'],
-            ['Router Usage:', document.querySelector('[data-stat="router_usage"]')?.textContent.trim() || '0']
-        ];
+        // Get current statistics
+        const plasticTotal = document.querySelector('[data-stat="plastic_total"]')?.textContent.trim() || '0';
+        const canTotal = document.querySelector('[data-stat="can_total"]')?.textContent.trim() || '0';
+        const routerUsage = document.querySelector('[data-stat="router_usage"]')?.textContent.trim() || '0';
+        const estimatedRevenue = document.querySelector('[data-stat="estimated_revenue"]')?.textContent.trim() || '0';
 
-        // Calculate the widest label for alignment
-        const labelWidth = 80;
+        // Create URL with parameters
+        const url = new URL('{{ route("generate.report") }}');
+        url.searchParams.append('plastic_total', plasticTotal);
+        url.searchParams.append('can_total', canTotal);
+        url.searchParams.append('router_usage', routerUsage);
         
-        doc.autoTable({
-            startY: 80,
-            head: [],
-            body: stats,
-            theme: 'plain',
-            styles: { 
-                fontSize: 12,
-                cellPadding: 5
-            },
-            columnStyles: {
-                0: { 
-                    fontStyle: 'bold',
-                    cellWidth: labelWidth 
-                },
-                1: { 
-                    cellWidth: 70,
-                    halign: 'right' // Right align the values
-                }
-            }
-        });
-        
-        // Add connected devices section
-        doc.setFontSize(16);
-        doc.setTextColor(34, 197, 94);
-        doc.text('Connected Devices', 20, 130);
-        
-        // Get and format table data
-        const table = $('#devicesTable').DataTable();
-        const tableData = table.rows().data().toArray().map(row => {
-            const statusText = row[3].includes('Active') ? 'Active' : 'Disconnected';
-            
-            return [
-                row[1],          // Name
-                row[2],          // MAC Address
-                statusText,      // Status (cleaned)
-                row[4],          // Bandwidth
-                row[5]           // Last Seen
-            ];
-        });
-        
-        // Add devices table with better styling
-        doc.autoTable({
-            startY: 140,
-            head: [['Name', 'MAC Address', 'Status', 'Bandwidth', 'Last Seen']],
-            body: tableData,
-            theme: 'grid',
-            styles: {
-                fontSize: 10,
-                cellPadding: 5,
-                lineColor: [34, 197, 94],
-                lineWidth: 0.1
-            },
-            headStyles: {
-                fillColor: [34, 197, 94],
-                textColor: [255, 255, 255],
-                fontSize: 11
-            },
-            alternateRowStyles: {
-                fillColor: [240, 255, 244]
-            },
-            columnStyles: {
-                3: { // Bandwidth column
-                    halign: 'right'
-                }
-            }
-        });
-        
-        // Add footer to all pages
-        const pageCount = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            
-            // Add footer line
-            doc.setDrawColor(34, 197, 94);
-            doc.line(20, doc.internal.pageSize.height - 20, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 20);
-            
-            // Add page number
-            doc.setFontSize(10);
-            doc.setTextColor(100, 100, 100);
-            doc.text(
-                `Page ${i} of ${pageCount}`, 
-                doc.internal.pageSize.width / 2, 
-                doc.internal.pageSize.height - 10, 
-                { align: 'center' }
-            );
-            
-            // Add footer text
-            doc.text(
-                'WiFi from Waste System - Generated Report', 
-                20, 
-                doc.internal.pageSize.height - 10
-            );
-        }
-        
-        // Save the PDF
-        doc.save('wifi-from-waste-report.pdf');
+        // Extract the numeric value from estimated revenue
+        const numericValue = estimatedRevenue.replace(/[^\d.]/g, '');
+        url.searchParams.append('estimated_revenue', numericValue);
+
+        // Open the URL in a new window to trigger the download
+        window.open(url.toString(), '_blank');
     }
 
     function markAsRead(notificationId) {

@@ -8,13 +8,13 @@ import RPi.GPIO as GPIO
 import requests
 
 # Servo setup
-SERVO_PIN = 23
+SERVO_PIN = 27
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(SERVO_PIN, GPIO.OUT)
 pwm = GPIO.PWM(SERVO_PIN, 50)  # 50Hz frequency
 pwm.start(0)
 
-API_ENDPOINT = "http://192.168.254.174:8000/api/material-detection"
+API_ENDPOINT = "http://192.168.65.217:8000/api/material-detection"
 
 def set_servo_angle(angle):
     duty = angle / 18 + 2
@@ -143,33 +143,43 @@ def real_time_detection():
     timeout_duration = 10  # Timeout in seconds
     
     try:
+        print("\nStarting real-time detection...")
         # Camera initialization code remains the same
         print("\nChecking camera system...")
         if not check_camera():
             raise RuntimeError("Camera hardware not detected")
 
+        print("\nInitializing camera...")
         picam2 = Picamera2(0)
         preview_config = picam2.create_preview_configuration(
-            main={"size": (640, 480), "format": "BGR888"}
+            main={"size": (1200, 720), "format": "BGR888"}
         )
         picam2.configure(preview_config)
         picam2.start()
         time.sleep(2)
+        print("Camera initialized successfully")
         
+        print("\nLoading YOLO model...")
         model_path = '/home/pi/Documents/Yolo_model_using_camera/best.pt'
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model file not found at {model_path}")
         model = YOLO(model_path)
+        print("YOLO model loaded successfully")
         
         # Set initial servo position
+        print("\nInitializing servo...")
         set_servo_angle(0)
         print("Servo initialized to starting position")
         
+        print("\nStarting main detection loop...")
         while True:
+            print("\nCapturing frame...")
             frame = picam2.capture_array()
             if frame is None:
+                print("Warning: Frame capture returned None")
                 continue
             
+            print("Frame captured successfully")
             # Create a copy of the frame for status display
             display_frame = frame.copy()
             
@@ -179,7 +189,16 @@ def real_time_detection():
                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
             
             try:
-                results = model.predict(source=frame, conf=0.60, iou=0.45)
+                print("Running YOLO prediction...")
+                # Increase confidence threshold to reduce false positives
+                results = model.predict(source=frame, conf=0.75, iou=0.45)  # Increased confidence threshold
+                print(f"YOLO prediction completed. Found {len(results)} results")
+                
+                # Reset detection counts for this frame
+                current_detections = {
+                    'plastic': 0,
+                    'can': 0
+                }
                 
                 if len(results) > 0:
                     result = results[0]
@@ -191,12 +210,43 @@ def real_time_detection():
                         cls = int(box.cls[0])
                         conf = float(box.conf[0])
                         
-                        # Draw rectangle
-                        cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        # Calculate object dimensions
+                        width = x2 - x1
+                        height = y2 - y1
+                        aspect_ratio = width / height
                         
-                        # Get class name
+                        # Filter out PVC pipes based on size and aspect ratio
+                        # Plastic bottles typically have aspect ratio between 0.3 and 0.7
+                        # and are not too large (width < 300 pixels)
+                        if cls == 0:  # If it's a plastic bottle class
+                            if aspect_ratio < 0.3 or aspect_ratio > 0.7 or width > 300:
+                                continue  # Skip this detection
+                        
+                        # Set color and label based on class
+                        if cls == 0:  # Plastic bottle
+                            color = (0, 255, 0)  # Green
+                            label = "Plastic Bottle"
+                        else:  # Can
+                            color = (0, 0, 255)  # Red
+                            label = "Can"
+                        
+                        # Draw bounding box
+                        cv2.rectangle(display_frame, (x1, y1), (x2, y2), color, 2)
+                        
+                        # Add label with confidence score
+                        label_text = f"{label}: {conf:.2f}"
+                        cv2.putText(display_frame, label_text, (x1, y1-10), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                        
+                        # Get class name for state machine
                         class_names = {0: "Plastic Bottle", 1: "Can"}
                         class_name = class_names.get(cls, f"Class {cls}")
+                        
+                        # Update current frame detections
+                        if cls == 0:  # Plastic bottle
+                            current_detections['plastic'] += 1
+                        elif cls == 1:  # Can
+                            current_detections['can'] += 1
                         
                         # State machine logic
                         if current_state == "WAITING_FIRST":
@@ -210,7 +260,6 @@ def real_time_detection():
                                 print("Servo moved to initial position")
                             except Exception as e:
                                 print(f"Servo error: {e}")
-                        
                         elif current_state == "WAITING_SECOND":
                             if time.time() - detection_start_time > timeout_duration:
                                 current_state = "WAITING_FIRST"
@@ -239,48 +288,40 @@ def real_time_detection():
                         
                         # Display object label and message
                         label = f"{class_name}: {conf:.2f}"
-                        cv2.putText(display_frame, label, (x1, y1-10), 
+                        cv2.putText(display_frame, label, (x1, y1-30), 
                                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                         cv2.putText(display_frame, message, (x1, y1-30), 
                                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
                 
-                # Display countdown if waiting for second object
-                if current_state == "WAITING_SECOND" and detection_start_time is not None:
-                    remaining = timeout_duration - int(time.time() - detection_start_time)
-                    if remaining > 0:
-                        countdown = f"Time remaining: {remaining}s"
-                        cv2.putText(display_frame, countdown, (10, 60), 
-                                  cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
-                
-                # After detection of class and confidence
-                if cls in [0, 1]:  # 0 for plastic, 1 for can
-                    material_type = "plastic" if cls == 0 else "can"
-                    print(f"\nSending detection data:")
-                    print(f"Material Type: {material_type}")
-                    print(f"Count: 1")  # Each detection counts as 1
-                    
-                    data = {
-                        "material_type": material_type,
-                        "count": 1
-                    }
-                    
-                    try:
-                        print(f"Sending request to: {API_ENDPOINT}")
-                        print(f"Request data: {data}")
-                        response = requests.post(
-                            API_ENDPOINT, 
-                            json=data,
-                            timeout=5,
-                            headers={'Content-Type': 'application/json'}
-                        )
-                        print(f"Full response: {response.text}")
-                    except requests.exceptions.ConnectionError as e:
-                        print(f"Connection Error: Please check if the server is running at {API_ENDPOINT}")
-                        print(f"Detailed error: {str(e)}")
-                    except requests.exceptions.Timeout:
-                        print("Request timed out. Server might be slow or unreachable")
-                    except Exception as e:
-                        print(f"Error sending data to API: {e}")
+                # Only send data if there are actual detections in this frame
+                for material_type, count in current_detections.items():
+                    if count > 0:
+                        print(f"\nSending detection data:")
+                        print(f"Material Type: {material_type}")
+                        print(f"Count: {count}")
+                        
+                        data = {
+                            "material_type": material_type,
+                            "count": count
+                        }
+                        
+                        try:
+                            print(f"Sending request to: {API_ENDPOINT}")
+                            print(f"Request data: {data}")
+                            response = requests.post(
+                                API_ENDPOINT, 
+                                json=data,
+                                timeout=5,
+                                headers={'Content-Type': 'application/json'}
+                            )
+                            print(f"Full response: {response.text}")
+                        except requests.exceptions.ConnectionError as e:
+                            print(f"Connection Error: Please check if the server is running at {API_ENDPOINT}")
+                            print(f"Detailed error: {str(e)}")
+                        except requests.exceptions.Timeout:
+                            print("Request timed out. Server might be slow or unreachable")
+                        except Exception as e:
+                            print(f"Error sending data to API: {e}")
                 
             except Exception as e:
                 print(f"Error during detection: {str(e)}")
